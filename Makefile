@@ -2,7 +2,7 @@ MKDIR   := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 BASEDIR  := $(MKDIR)
 
 CXX      := /usr/bin/gcc
-CXXFLAGS := -std=c++11 -Wall -g -fopenmp -march=native
+CXXFLAGS := -std=c++11 -Wall -g -fopenmp -march=native -O0
 LDLIBS   := -lpthread -lrt -lstdc++ -lnuma
 
 BDIR ?= build
