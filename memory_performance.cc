@@ -55,7 +55,7 @@ int memaccess_runner(AccessMode mode, int* memory, int* target_memory, int64_t c
                     // randidx = rand() % mem_len_int; // Index computation overhead affects the performance a lot
                     *((int*)target_memory + randidx) = *((int*)memory + randidx); // Copy
                     idx++;
-                    if (idx % 0x800000 == 0) {
+                    if ((idx & 0x7fffff) == 0) {
                         TLOG(id, mode, 0x800000, t_begin, t_end, dur);
                         t_begin = std::chrono::steady_clock::now();
                     }
@@ -78,12 +78,14 @@ int memaccess_runner(AccessMode mode, int* memory, int* target_memory, int64_t c
         } else if (mode == Sequential) {
             int64_t chunk_size_int = chunk_size / sizeof(int); // Minimum unit is an integer
             int64_t mem_len_int = mem_len / sizeof(int);
-            while (idx * chunk_size_int + chunk_size_int < mem_len_int) {
+            int64_t idx_chunk = idx * chunk_size_int;
+            while (idx_chunk + chunk_size_int < mem_len_int) {
                 for (int i = 0; i < chunk_size_int; i++) {
-                    // *((int*)memory + idx * chunk_size_int + i) + 1; // Just read
-                    *((int*)target_memory + idx * chunk_size_int + i) = *((int*)memory + idx * chunk_size_int + i); // Copy
+                    // *((int*)memory + idx_chunk + i) + 1; // Just read
+                    *((int*)target_memory + idx_chunk + i) = *((int*)memory + idx_chunk + i); // Copy
                 }
                 idx++;
+                idx_chunk = idx * chunk_size_int;
             }
             TLOG(id, mode, mem_len_int, t_begin, t_end, dur);
         }
@@ -146,7 +148,7 @@ int main(int argc, char* argv[])
         cidx = 0;
         assert(num_threads % 2 == 0); // S_SR mode should use the even number of num_threads
         for (tidx = 0; tidx < num_threads; tidx++) {
-            mem_len = 1000 * 1000 * 1000 * sizeof(int);
+            mem_len = 1000 * 1000 * 1000 * sizeof(int) / sizeof(int);
             int* memory = (int*)numa_alloc_onnode(mem_len, cidx);
             int* target_memory = (int*)numa_alloc_onnode(mem_len, cidx);
             if (memory == NULL | target_memory == NULL) {
@@ -192,7 +194,7 @@ int main(int argc, char* argv[])
         assert(num_threads % 2 == 0); // S_SR mode should use the even number of num_threads
         for (cidx = 0; cidx < nr_nodes; cidx++) {
             for (tidx = 0; tidx < num_threads; tidx++) {
-                mem_len = 1000 * 1000 * 1000 * sizeof(int);
+                mem_len = 1000 * 1000 * 1000 * sizeof(int) / sizeof(int);
                 int* memory = (int*)numa_alloc_onnode(mem_len, cidx);
                 int* target_memory = (int*)numa_alloc_onnode(mem_len, cidx);
                 if (memory == NULL | target_memory == NULL) {
@@ -244,7 +246,7 @@ int main(int argc, char* argv[])
                 _num_threads = num_threads;
             }
             for (tidx = 0; tidx < _num_threads; tidx++) {
-                mem_len = 1000 * 1000 * 1000 * sizeof(int);
+                mem_len = 1000 * 1000 * 1000 * sizeof(int) / sizeof(int);
                 int* memory = (int*)numa_alloc_onnode(mem_len, cidx);
                 int* target_memory = (int*)numa_alloc_onnode(mem_len, cidx);
                 if (memory == NULL | target_memory == NULL) {
@@ -291,7 +293,7 @@ int main(int argc, char* argv[])
         std::cerr << "Random a single core" << std::endl;
         cidx = 0;
         for (tidx = 0; tidx < num_threads; tidx++) {
-            mem_len = 1000 * 1000 * 1000 * sizeof(int);
+            mem_len = 1000 * 1000 * 1000 * sizeof(int) / sizeof(int);
             int* memory = (int*)numa_alloc_onnode(mem_len, cidx);
             int* target_memory = (int*)numa_alloc_onnode(mem_len, cidx);
             if (memory == NULL | target_memory == NULL) {
@@ -333,7 +335,7 @@ int main(int argc, char* argv[])
         std::cerr << "Random a single core" << std::endl;
         cidx = 0;
         for (tidx = 0; tidx < num_threads; tidx++) {
-            mem_len = 1000 * 1000 * 1000 * sizeof(int);
+            mem_len = 1000 * 1000 * 1000 * sizeof(int) / sizeof(int);
             int* memory = (int*)numa_alloc_onnode(mem_len, cidx);
             int* target_memory = (int*)numa_alloc_onnode(mem_len, cidx);
             if (memory == NULL | target_memory == NULL) {
