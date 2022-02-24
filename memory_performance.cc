@@ -80,10 +80,11 @@ int memaccess_runner(AccessMode mode, int* memory, int* target_memory, int64_t c
             int64_t mem_len_int = mem_len / sizeof(int);
             int64_t idx_chunk = idx * chunk_size_int;
             while (idx_chunk + chunk_size_int < mem_len_int) {
-                for (int i = 0; i < chunk_size_int; i++) {
-                    // *((int*)memory + idx_chunk + i) + 1; // Just read
-                    *((int*)target_memory + idx_chunk + i) = *((int*)memory + idx_chunk + i); // Copy
-                }
+                // for (int i = 0; i < chunk_size_int; i++) {
+                //     // *((int*)memory + idx_chunk + i) + 1; // Just read
+                //     *((int*)target_memory + idx_chunk + i) = *((int*)memory + idx_chunk + i); // Copy
+                // }
+                memcpy((int*)memory + idx_chunk, (int*)target_memory + idx_chunk, chunk_size);
                 idx++;
                 idx_chunk = idx * chunk_size_int;
             }
