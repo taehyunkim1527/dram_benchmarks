@@ -55,8 +55,8 @@ int memaccess_runner(AccessMode mode, int* memory, int* target_memory, int64_t c
                     // randidx = rand() % mem_len_int; // Index computation overhead affects the performance a lot
                     *((int*)target_memory + randidx) = *((int*)memory + randidx); // Copy
                     idx++;
-                    if ((idx & 0x7fffff) == 0) {
-                        TLOG(id, mode, 0x800000, t_begin, t_end, dur);
+                    if ((idx & 0x3ffffff) == 0) {
+                        TLOG(id, mode, 0x4000000, t_begin, t_end, dur);
                         t_begin = std::chrono::steady_clock::now();
                     }
                 }
@@ -135,13 +135,6 @@ int main(int argc, char* argv[])
     //     std::cerr << numa_node_of_cpu(i * tot_cores_per_cpu) << std::endl;
     // }
 	int nr_nodes = get_node_list();
-	if(nr_nodes == -1){
-		fprintf(stderr, "Configured Nodes does not match available memory nodes\n");
-		exit(1);
-	} else if (nr_nodes < 2) {
-		printf("A minimum of 2 nodes is required for this test.\n");
-		exit(77);
-	}
     if (setting_a == S_SR) {
         std::cerr << "" << std::endl;
         std::cerr << "Random/Sequential on the same core (One CPU)" << std::endl;
@@ -191,6 +184,13 @@ int main(int argc, char* argv[])
     } else if (setting_a == D_SR) {
         std::cerr << "" << std::endl;
         std::cerr << "Random/Sequential on the same core (Two CPUs)" << std::endl;
+        if(nr_nodes == -1){
+            fprintf(stderr, "Configured Nodes does not match available memory nodes\n");
+            exit(1);
+        } else if (nr_nodes < 2) {
+            printf("A minimum of 2 nodes is required for this test.\n");
+            exit(77);
+        }
         assert(num_threads % 2 == 0); // S_SR mode should use the even number of num_threads
         for (cidx = 0; cidx < nr_nodes; cidx++) {
             for (tidx = 0; tidx < num_threads; tidx++) {
@@ -238,6 +238,13 @@ int main(int argc, char* argv[])
     } else if (setting_a == OSOR) {
         std::cerr << "" << std::endl;
         std::cerr << "Random/Sequential on different cores" << std::endl;
+        if(nr_nodes == -1){
+            fprintf(stderr, "Configured Nodes does not match available memory nodes\n");
+            exit(1);
+        } else if (nr_nodes < 2) {
+            printf("A minimum of 2 nodes is required for this test.\n");
+            exit(77);
+        }
         for (cidx = 0; cidx < nr_nodes; cidx++) {
             int _num_threads;
             if (cidx == 0) {
@@ -290,7 +297,7 @@ int main(int argc, char* argv[])
         }
     } else if (setting_a == S_R) {
         std::cerr << "" << std::endl;
-        std::cerr << "Random a single core" << std::endl;
+        std::cerr << "Random in a single core" << std::endl;
         cidx = 0;
         for (tidx = 0; tidx < num_threads; tidx++) {
             mem_len = 1000 * 1000 * 1000 * sizeof(int) / sizeof(int);
@@ -332,7 +339,7 @@ int main(int argc, char* argv[])
         }
     } else if (setting_a == S_S) {
         std::cerr << "" << std::endl;
-        std::cerr << "Random a single core" << std::endl;
+        std::cerr << "Sequential in a single core" << std::endl;
         cidx = 0;
         for (tidx = 0; tidx < num_threads; tidx++) {
             mem_len = 1000 * 1000 * 1000 * sizeof(int) / sizeof(int);
